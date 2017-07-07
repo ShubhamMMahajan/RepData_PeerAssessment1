@@ -36,7 +36,10 @@ knitr::opts_chunk$set(echo = TRUE)
     plot(steps_by_interval$interval, steps_by_interval$steps, type='l', 
         main="Average steps for all days", xlab="Interval", 
         ylab="Average steps")
+    max(steps_by_interval$steps)
 ```
+
+**Max: 206.1698**  
 
 ##Missing Values  
 **replaced the NA values with mean of 5 minute intervals**  
