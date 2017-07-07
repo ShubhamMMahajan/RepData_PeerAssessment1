@@ -1,25 +1,80 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Coursera Course 5 Project 1"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-## Loading and preprocessing the data
+##Loading and tranforming the data
+```{r loading the data}
+    setwd("C:\\Users\\shubh\\Documents\\Coursera\\Reproducible Research\\Week 2")
+    activity_data <- read.csv("activity.csv", header = TRUE, stringsAsFactors = FALSE)
+    activity_data$date <- as.Date(activity_data$date)
+    #activity_data <- activity_data[ with (activity_data, { !(is.na(steps)) } ), ]
+    activity_data_no_na <- activity_data[!is.na(activity_data$steps),]
+```
 
+##Mean total number of steps
+```{r mean steps per day}
+    total_steps_a_day <- unname(tapply(activity_data_no_na$steps, activity_data_no_na$date, sum))
+    hist(total_steps_a_day, main = "Steps per day", xlab = "Steps", ylab = "Number of Days")
+    mean(total_steps_a_day, na.rm = TRUE)
+    median(total_steps_a_day, na.rm = TRUE)
+    
+```
 
+**Mean: 10766.19**  
+**Median: 10765**
 
-## What is mean total number of steps taken per day?
+##Average number of steps for all days
+```{r average daily activity}
+    steps_by_interval <- aggregate(steps ~ interval, activity_data, mean)
 
+    # create a time series plot 
+    plot(steps_by_interval$interval, steps_by_interval$steps, type='l', 
+        main="Average steps for all days", xlab="Interval", 
+        ylab="Average steps")
+```
 
+##Missing Values  
+**replaced the NA values with mean of 5 minute intervals**  
+```{r missing values}
+    df <- data.frame(interval = unique(activity_data$interval), steps = tapply(activity_data_no_na$steps, activity_data_no_na$interval, mean))
+replace_na <- activity_data
+for(i in 1:nrow(activity_data)) {
+    if (is.na(activity_data$steps[i])) {
+        
+        replace_na$steps[i] <- df$steps[which(df$interval==activity_data$interval[i])]
+    }
+}
+head(replace_na)
+    total_steps_a_day_replaced <- unname(tapply(replace_na$steps, replace_na$date, sum))
+    hist(total_steps_a_day, main = "Steps per day with NA replaced Data", xlab = "Steps", ylab = "Number of Days")
+    mean(total_steps_a_day_replaced)
+    median(total_steps_a_day_replaced)
 
-## What is the average daily activity pattern?
+```
 
-
-
-## Imputing missing values
-
-
+**Old Mean: 10766.19**  
+**New Mean: 10766.19**  
+**Old Median: 10765**  
+**New Median: 10766.19**  
+**The mean did not change but the median did, the median is a little higher with the replacement of NA values**  
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r weekdays vs weekends}
+    library(chron)
+    replace_na$weekend <- is.weekend(replace_na$date)
+    replace_na$weekend[replace_na$weekend] <- "weekend"
+    replace_na$weekend[replace_na$weekend != "weekend"] <- "weekday"
+    replace_na$weekend <- as.factor(replace_na$weekend)
+    average_steps <- aggregate(steps ~ interval + weekend, replace_na, mean)
+    library(ggplot2)
+    qplot(data = average_steps, x=interval, y = steps, geom = "line", facets = weekend ~ .)
+
+    
+```
+
